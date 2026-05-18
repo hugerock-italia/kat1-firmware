@@ -108,7 +108,7 @@ uint8_t defaultCommands[KEYMAP_COUNT][KEYS_PER_MAP] = {
 };
 
 uint8_t currentAssignments[KEYS_PER_MAP];
-uint8_t wheelEnabled[KEYMAP_COUNT] = { 1, 1, 1 };
+uint8_t wheelEnabled[KEYMAP_COUNT] = { 0, 1, 1 };  // Map1 OsmAnd: wheel disabled
 
 // ==================== TEMPORIZZAZIONI ====================
 
