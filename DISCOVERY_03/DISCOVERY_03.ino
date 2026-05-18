@@ -4,6 +4,12 @@
  * Autore: ANDREA BRENTEGANI
  */
 
+// =====================================================================
+//  KAT-ADV Firmware  ·  DISCOVERY (joystick Hall)
+//  Version: 0.4.0  ·  Build date: 2026-05-18
+//  Repo: hugerock-italia/kat1-firmware
+// =====================================================================
+
 #include <USB.h>
 #include <USBHIDKeyboard.h>
 #include <NimBLEDevice.h>
