@@ -21,6 +21,8 @@
 #include <EEPROM.h>
 #include <Update.h>
 #include <Preferences.h>
+#include <esp_ota_ops.h>
+#include <esp_task_wdt.h>
 
 // ==================== ISTANZE GLOBALI ====================
 
@@ -312,6 +314,7 @@ class OtaCharacteristicCallbacks : public NimBLECharacteristicCallbacks {
 
     size_t written = Update.write((uint8_t*)data.data(), data.length());
     otaWritten += written;
+    esp_task_wdt_reset();
 
     if (written != data.length()) {
       otaBleActive = false;
@@ -887,6 +890,7 @@ void setup() {
   loadMapColors();
 
   setupBLE();
+  esp_ota_mark_app_valid_cancel_rollback();
 
   TRAX.addEventListener(keypad_handler);
   TRAX.setHoldTime(long_press_time);
