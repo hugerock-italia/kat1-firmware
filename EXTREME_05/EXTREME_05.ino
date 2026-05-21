@@ -6,7 +6,7 @@
 
 // =====================================================================
 //  KAT-ADV Firmware  ·  EXTREME (switch digitale)
-//  Version: 0.4.0  ·  Build date: 2026-05-18
+//  Version: 0.5.0  ·  Build date: 2026-05-21
 //  Repo: hugerock-italia/kat1-firmware
 // =====================================================================
 
@@ -227,7 +227,11 @@ class ConfigCharacteristicCallbacks : public NimBLECharacteristicCallbacks {
       uint8_t r = (uint8_t)cmd.substring(p1 + 1, p2).toInt();
       uint8_t g = (uint8_t)cmd.substring(p2 + 1, p3).toInt();
       uint8_t b = (uint8_t)cmd.substring(p3 + 1).toInt();
-      if (mapN >= 1 && mapN <= 3) saveMapColor(mapN - 1, r, g, b);
+      if (mapN >= 1 && mapN <= 3) {
+        saveMapColor(mapN - 1, r, g, b);
+        setColor(r, g, b);
+        delay(1000);
+      }
       return;
     }
 
