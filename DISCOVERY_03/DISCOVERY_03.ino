@@ -6,7 +6,7 @@
 
 // =====================================================================
 //  KAT-ADV Firmware  ·  DISCOVERY (joystick Hall)
-//  Version: 0.5.0  ·  Build date: 2026-05-21
+//  Version: 0.2.0  ·  Build date: 2026-05-21
 //  Repo: hugerock-italia/kat1-firmware
 // =====================================================================
 
