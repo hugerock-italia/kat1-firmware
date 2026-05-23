@@ -49,13 +49,13 @@ size_t otaWritten = 0;
 
 // ==================== PIN ====================
 
-const int LED_RED = 7;
-const int LED_GREEN = 8;
-const int LED_BLUE = 9;
-const int Vpin = 10;
-const int PIN_X = 5;
-const int PIN_Y = 4;
-const int EXT_BTN_PIN = 6;
+const int LED_RED = D7;
+const int LED_GREEN = D8;
+const int LED_BLUE = D9;
+const int Vpin = D10;
+const int PIN_X = D5;
+const int PIN_Y = D4;
+const int EXT_BTN_PIN = D6;
 
 const int JOYSTICK_CENTER = 1920;
 const int DEADZONE_POSITIVE = 200;
