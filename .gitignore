@@ -1,4 +1,6 @@
-build/
+﻿build/
 *.bin
+!DISCOVERY-PAD.bin
+!EXTREME-PAD.bin
 .DS_Store
 Thumbs.db
