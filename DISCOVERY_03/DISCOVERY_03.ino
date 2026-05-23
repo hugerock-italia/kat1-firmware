@@ -952,9 +952,10 @@ void colore(unsigned char r, unsigned char g, unsigned char b) {
 }
 
 void setColor(uint8_t r, uint8_t g, uint8_t b) {
-  ledcWrite(LED_RED, 255 - r);
-  ledcWrite(LED_GREEN, 255 - g);
-  ledcWrite(LED_BLUE, 255 - b);
+  // Common cathode: HIGH = LED on, direct PWM value
+  ledcWrite(LED_RED, r);
+  ledcWrite(LED_GREEN, g);
+  ledcWrite(LED_BLUE, b);
 }
 
 // ==================== SETUP ====================
