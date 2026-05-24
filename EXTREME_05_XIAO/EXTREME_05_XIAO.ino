@@ -2,6 +2,8 @@
  * HUGEROCK EXTREME PAD - FIRMWARE v05
  * Levetta digitale roadbook + BLE OTA (no WiFi)
  * Autore: ANDREA BRENTEGANI
+ * Board: Xiao ESP32-S3
+ * LED: common cathode — nessuna inversione in setColor
  */
 
 // =====================================================================
@@ -47,13 +49,13 @@ size_t otaWritten = 0;
 
 // ==================== PIN ====================
 
-const int LED_RED = 7;
-const int LED_GREEN = 8;
-const int LED_BLUE = 9;
-const int Vpin = 10;
-const int SWITCH_UP = 4;
-const int SWITCH_DOWN = 5;
-const int EXT_BTN_PIN = 6;
+const int LED_RED = D7;
+const int LED_GREEN = D8;
+const int LED_BLUE = D9;
+const int Vpin = D10;
+const int SWITCH_UP = D4;
+const int SWITCH_DOWN = D5;
+const int EXT_BTN_PIN = D6;
 
 unsigned long lastSwitchMove = 0;
 const int SWITCH_REPEAT_DELAY = 80;
@@ -850,10 +852,12 @@ void colore(unsigned char r, unsigned char g, unsigned char b) {
   }
 }
 
+// Xiao ESP32-S3: LED common cathode, nessuna inversione
+// Core 2.x: ledcWrite(channel, value)
 void setColor(uint8_t r, uint8_t g, uint8_t b) {
-  ledcWrite(LEDC_CH_RED,   255 - r);
-  ledcWrite(LEDC_CH_GREEN, 255 - g);
-  ledcWrite(LEDC_CH_BLUE,  255 - b);
+  ledcWrite(LEDC_CH_RED,   r);
+  ledcWrite(LEDC_CH_GREEN, g);
+  ledcWrite(LEDC_CH_BLUE,  b);
 }
 
 // ==================== SETUP ====================
