@@ -1,12 +1,12 @@
 /*
- * HUGEROCK EXTREME PAD - FIRMWARE v04
+ * HUGEROCK EXTREME PAD - FIRMWARE v05
  * Levetta digitale roadbook + BLE OTA (no WiFi)
  * Autore: ANDREA BRENTEGANI
  */
 
 // =====================================================================
 //  KAT-ADV Firmware  ·  EXTREME (switch digitale)
-//  Version: 0.2.0  ·  Build date: 2026-05-21
+//  Version: 0.4.1  ·  Build date: 2026-05-24
 //  Repo: hugerock-italia/kat1-firmware
 // =====================================================================
 
@@ -62,13 +62,17 @@ bool extBtnLast = HIGH;
 unsigned long extBtnLastTime = 0;
 const unsigned long debounceDelay = 50;
 
-// ==================== VELOCITÀ ====================
+// ==================== VELOCITÃ€ ====================
 
 int vel = LOW;
 int Mvel = 0;
 const int Vel_ab = 1;
 
 // ==================== LED ====================
+// LEDC channels - core 2.x richiede canali espliciti
+#define LEDC_CH_RED   0
+#define LEDC_CH_GREEN 1
+#define LEDC_CH_BLUE  2
 
 unsigned long intervalloLampeggio = 3000;
 float dutyCycle = 0.04;
@@ -77,6 +81,10 @@ bool firstConn = false;
 // Colori mappe (R,G,B): caricati da NVS, fallback giallo/blu/verde
 uint8_t mapColor[3][3] = { {255, 255, 0}, {0, 0, 255}, {0, 255, 0} };
 Preferences prefs;
+// Preview temporaneo colore dopo CONFIG:MAP_COLOR (gestito nel loop)
+bool showColorPreview     = false;
+unsigned long colorPreviewTime = 0;
+uint8_t previewColor[3]   = {0, 0, 0};
 
 // ==================== MATRICE ====================
 
@@ -164,7 +172,6 @@ void loadWheelFlagsFromEEPROM();
 void executeCommandById(uint8_t cmdId);
 void loadMapColors();
 void saveMapColor(int mapIndex, uint8_t r, uint8_t g, uint8_t b);
-void sendMapColorsResponse();
 
 // ==================== HID REPORT DESCRIPTOR ====================
 
@@ -189,7 +196,7 @@ class ConfigCharacteristicCallbacks : public NimBLECharacteristicCallbacks {
     if (value.length() == 0) return;
 
     String cmd(value.c_str());
-    Serial.print("📨 ");
+    Serial.print("ðŸ“¨ ");
     Serial.println(cmd);
 
     if (cmd == "CONFIG:MODE:ON") {
@@ -204,6 +211,13 @@ class ConfigCharacteristicCallbacks : public NimBLECharacteristicCallbacks {
       EEPROM.begin(512);
       for (int i = 0; i < 512; i++) EEPROM.write(i, 0xFF);
       EEPROM.commit();
+      // Reset anche colori NVS
+      prefs.begin("mapcolors", false);
+      prefs.clear();
+      prefs.end();
+      mapColor[0][0]=255; mapColor[0][1]=255; mapColor[0][2]=0;
+      mapColor[1][0]=0;   mapColor[1][1]=0;   mapColor[1][2]=255;
+      mapColor[2][0]=0;   mapColor[2][1]=255; mapColor[2][2]=0;
       return;
     }
 
@@ -229,14 +243,18 @@ class ConfigCharacteristicCallbacks : public NimBLECharacteristicCallbacks {
       uint8_t b = (uint8_t)cmd.substring(p3 + 1).toInt();
       if (mapN >= 1 && mapN <= 3) {
         saveMapColor(mapN - 1, r, g, b);
-        setColor(r, g, b);
-        delay(1000);
+        previewColor[0] = r;
+        previewColor[1] = g;
+        previewColor[2] = b;
+        showColorPreview  = true;
+        colorPreviewTime  = millis();
       }
       return;
     }
 
     if (cmd == "CONFIG:GET_COLORS") {
-      sendMapColorsResponse();
+      String resp = String(mapColor[0][0])+","+mapColor[0][1]+","+mapColor[0][2]+";"+mapColor[1][0]+","+mapColor[1][1]+","+mapColor[1][2]+";"+mapColor[2][0]+","+mapColor[2][1]+","+mapColor[2][2];
+      configCharacteristic->setValue(resp.c_str());
       return;
     }
 
@@ -258,7 +276,7 @@ class ConfigCharacteristicCallbacks : public NimBLECharacteristicCallbacks {
     if (cmd == "CONFIG:OTA:END") {
       if (otaBleActive) {
         if (Update.end(true)) {
-          Serial.println("✅ OTA OK - restart");
+          Serial.println("âœ… OTA OK - restart");
           String ok = "OTA:OK";
           otaCharacteristic->setValue(ok.c_str());
           otaCharacteristic->notify();
@@ -335,12 +353,12 @@ class OtaCharacteristicCallbacks : public NimBLECharacteristicCallbacks {
 class ServerCallbacks : public NimBLEServerCallbacks {
   void onConnect(NimBLEServer* pServer) {
     bleConnected = true;
-    Serial.println("✓ BLE Connected");
+    Serial.println("âœ“ BLE Connected");
   }
   void onDisconnect(NimBLEServer* pServer) {
     bleConnected = false;
     otaBleActive = false;
-    Serial.println("⚠ BLE Disconnected");
+    Serial.println("âš  BLE Disconnected");
     vTaskDelay(pdMS_TO_TICKS(1000));
     NimBLEDevice::startAdvertising();
   }
@@ -382,7 +400,7 @@ void setupBLE() {
 
   configCharacteristic = configService->createCharacteristic(
     "87654321-4321-4321-4321-210987654321",
-    NIMBLE_PROPERTY::WRITE | NIMBLE_PROPERTY::NOTIFY);
+    NIMBLE_PROPERTY::WRITE | NIMBLE_PROPERTY::READ);
   configCharacteristic->setCallbacks(new ConfigCharacteristicCallbacks());
 
   otaCharacteristic = configService->createCharacteristic(
@@ -401,7 +419,7 @@ void setupBLE() {
   pAdv->setScanResponse(true);
   pAdv->start();
 
-  Serial.println("✓ BLE ready");
+  Serial.println("âœ“ BLE ready");
 }
 
 void setOptimalConnectionParams() {
@@ -466,16 +484,6 @@ void saveMapColor(int mapIndex, uint8_t r, uint8_t g, uint8_t b) {
   prefs.putUChar(kg.c_str(), g);
   prefs.putUChar(kb.c_str(), b);
   prefs.end();
-}
-
-void sendMapColorsResponse() {
-  String resp = "MAP_COLORS:";
-  for (int i = 0; i < 3; i++) {
-    resp += String(mapColor[i][0]) + ":" + String(mapColor[i][1]) + ":" + String(mapColor[i][2]);
-    if (i < 2) resp += ":";
-  }
-  configCharacteristic->setValue(resp.c_str());
-  configCharacteristic->notify();
 }
 
 // ==================== EXECUTE COMMAND ====================
@@ -807,7 +815,7 @@ void performKeymapChange(unsigned long now) {
   lastKeymapChange = now;
   loadAssignmentsFromEEPROM(current_keymap);
   loadRepeatFlagsFromEEPROM(current_keymap);
-  Serial.printf("🔄 Mappa: %d\n", current_keymap);
+  Serial.printf("ðŸ”„ Mappa: %d\n", current_keymap);
   for (int i = 0; i < 3; i++) {
     setColor(255, 255, 255);
     delay(80);
@@ -843,23 +851,26 @@ void colore(unsigned char r, unsigned char g, unsigned char b) {
 }
 
 void setColor(uint8_t r, uint8_t g, uint8_t b) {
-  ledcWrite(LED_RED, 255 - r);
-  ledcWrite(LED_GREEN, 255 - g);
-  ledcWrite(LED_BLUE, 255 - b);
+  ledcWrite(LEDC_CH_RED,   255 - r);
+  ledcWrite(LEDC_CH_GREEN, 255 - g);
+  ledcWrite(LEDC_CH_BLUE,  255 - b);
 }
 
 // ==================== SETUP ====================
 
 void setup() {
   Serial.begin(115200);
-  Serial.println("=== HUGEROCK EXTREME PAD v04 ===");
+  Serial.println("=== HUGEROCK EXTREME PAD v05 (fw 0.4.1) ===");
 
   pinMode(LED_RED, OUTPUT);
   pinMode(LED_GREEN, OUTPUT);
   pinMode(LED_BLUE, OUTPUT);
-  ledcAttach(LED_RED, 5000, 8);
-  ledcAttach(LED_GREEN, 5000, 8);
-  ledcAttach(LED_BLUE, 5000, 8);
+  ledcSetup(LEDC_CH_RED,   5000, 8);
+  ledcSetup(LEDC_CH_GREEN, 5000, 8);
+  ledcSetup(LEDC_CH_BLUE,  5000, 8);
+  ledcAttachPin(LED_RED,   LEDC_CH_RED);
+  ledcAttachPin(LED_GREEN, LEDC_CH_GREEN);
+  ledcAttachPin(LED_BLUE,  LEDC_CH_BLUE);
   setColor(255, 255, 255);
 
   pinMode(Vpin, INPUT_PULLUP);
@@ -884,14 +895,14 @@ void setup() {
   loadAssignmentsFromEEPROM(current_keymap);
   loadRepeatFlagsFromEEPROM(current_keymap);
   loadWheelFlagsFromEEPROM();
-  loadMapColors();
 
   setupBLE();
+  loadMapColors();
 
   TRAX.addEventListener(keypad_handler);
   TRAX.setHoldTime(long_press_time);
 
-  Serial.println("✅ READY");
+  Serial.println("âœ… READY");
   for (int i = 0; i < 2; i++) {
     setColor(255, 255, 255);
     delay(150);
@@ -922,13 +933,16 @@ void loop() {
     firstConn = true;
   }
 
-  if (configModeActive) {
-    setColor(255, 0, 0);
-  } else {
-    switch (current_keymap) {
-      case 1: setColor(mapColor[0][0], mapColor[0][1], mapColor[0][2]); break;
-      case 2: setColor(mapColor[1][0], mapColor[1][1], mapColor[1][2]); break;
-      case 3: setColor(mapColor[2][0], mapColor[2][1], mapColor[2][2]); break;
+  if (showColorPreview) {
+    if (millis() - colorPreviewTime >= 1000) showColorPreview = false;
+    else setColor(previewColor[0], previewColor[1], previewColor[2]);
+  }
+  if (!showColorPreview) {
+    if (configModeActive) {
+      setColor(255, 0, 0);
+    } else {
+      int m = current_keymap - 1;
+      setColor(mapColor[m][0], mapColor[m][1], mapColor[m][2]);
     }
   }
 
@@ -952,3 +966,5 @@ void loop() {
 
   delay(5);
 }
+
+
