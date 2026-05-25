@@ -1,4 +1,16 @@
 build/
-*.bin
 .DS_Store
 Thumbs.db
+
+# Ignora binari generici ma traccia gli artefatti di build nominati
+*.bin
+!**/DISCOVERY-PAD.bin
+!**/EXTREME-PAD.bin
+!**/*.ino.bin
+!**/*.ino.bootloader.bin
+!**/*.ino.partitions.bin
+!**/*.ino.merged.bin
+
+# ELF e MAP sono grandi — ignorati
+*.elf
+*.map
