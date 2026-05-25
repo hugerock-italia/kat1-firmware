@@ -7,9 +7,11 @@
 
 // =====================================================================
 //  KAT-ADV Firmware  ·  EXTREME (switch digitale)
-//  Version: 0.4.1  ·  Build date: 2026-05-24
+//  Version: 3.1.1  ·  Build date: 2026-05-25
 //  Repo: hugerock-italia/kat1-firmware
 // =====================================================================
+
+#define FW_VERSION "3.1.1"
 
 #include <USB.h>
 #include <USBHIDKeyboard.h>
@@ -374,7 +376,7 @@ void setupBLE() {
     nvs_flash_init();
   }
 
-  NimBLEDevice::init("EXTREME-PAD");
+  NimBLEDevice::init("EXTREME-PAD-v" FW_VERSION);
   NimBLEDevice::setSecurityAuth(true, true, true);
   NimBLEDevice::setSecurityPasskey(123456);
   NimBLEDevice::setSecurityInitKey(BLE_SM_PAIR_KEY_DIST_ENC | BLE_SM_PAIR_KEY_DIST_ID);
