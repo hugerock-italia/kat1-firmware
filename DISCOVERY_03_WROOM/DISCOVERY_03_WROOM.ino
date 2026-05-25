@@ -20,9 +20,11 @@
 
 // =====================================================================
 //  KAT-ADV Firmware  ·  DISCOVERY (joystick Hall)
-//  Version: 0.4.1  ·  Build date: 2026-05-24
+//  Version: 3.1.1  ·  Build date: 2026-05-25
 //  Repo: hugerock-italia/kat1-firmware
 // =====================================================================
+
+#define FW_VERSION "3.1.1"
 
 #include <USB.h>
 #include <USBHIDKeyboard.h>
@@ -288,6 +290,11 @@ class ConfigCharacteristicCallbacks : public NimBLECharacteristicCallbacks {
                     mapColor[2][0]+","+mapColor[2][1]+","+mapColor[2][2];
       configCharacteristic->setValue(resp.c_str());
       // Il client legge il valore con una READ — niente notify() per non aggiungere CCCD
+      return;
+    }
+
+    if (cmd == "CONFIG:GET_VERSION") {
+      configCharacteristic->setValue(FW_VERSION);
       return;
     }
 

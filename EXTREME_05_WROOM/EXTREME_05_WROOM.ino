@@ -7,9 +7,11 @@
 
 // =====================================================================
 //  KAT-ADV Firmware  ·  EXTREME (switch digitale)
-//  Version: 0.4.1  ·  Build date: 2026-05-24
+//  Version: 3.1.1  ·  Build date: 2026-05-25
 //  Repo: hugerock-italia/kat1-firmware
 // =====================================================================
+
+#define FW_VERSION "3.1.1"
 
 #include <USB.h>
 #include <USBHIDKeyboard.h>
@@ -256,6 +258,11 @@ class ConfigCharacteristicCallbacks : public NimBLECharacteristicCallbacks {
     if (cmd == "CONFIG:GET_COLORS") {
       String resp = String(mapColor[0][0])+","+mapColor[0][1]+","+mapColor[0][2]+";"+mapColor[1][0]+","+mapColor[1][1]+","+mapColor[1][2]+";"+mapColor[2][0]+","+mapColor[2][1]+","+mapColor[2][2];
       configCharacteristic->setValue(resp.c_str());
+      return;
+    }
+
+    if (cmd == "CONFIG:GET_VERSION") {
+      configCharacteristic->setValue(FW_VERSION);
       return;
     }
 
