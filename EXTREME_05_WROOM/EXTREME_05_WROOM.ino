@@ -261,6 +261,11 @@ class ConfigCharacteristicCallbacks : public NimBLECharacteristicCallbacks {
       return;
     }
 
+    if (cmd == "CONFIG:GET_VERSION") {
+      configCharacteristic->setValue(FW_VERSION);
+      return;
+    }
+
     if (cmd.startsWith("CONFIG:OTA:BEGIN:")) {
       otaExpectedSize = cmd.substring(17).toInt();
       otaWritten = 0;
@@ -376,7 +381,7 @@ void setupBLE() {
     nvs_flash_init();
   }
 
-  NimBLEDevice::init("EXTREME-PAD-v" FW_VERSION);
+  NimBLEDevice::init("EXTREME-PAD");
   NimBLEDevice::setSecurityAuth(true, true, true);
   NimBLEDevice::setSecurityPasskey(123456);
   NimBLEDevice::setSecurityInitKey(BLE_SM_PAIR_KEY_DIST_ENC | BLE_SM_PAIR_KEY_DIST_ID);
